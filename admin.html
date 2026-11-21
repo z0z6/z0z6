@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Panel strony</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect x='3' y='7' width='10' height='7' rx='2' fill='%233245e6'/%3E%3Cpath d='M5.5 7V5a2.5 2.5 0 0 1 5 0v2' stroke='%233245e6' stroke-width='1.6' fill='none'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+  <!-- Ekran logowania (wypełnia admin.js) -->
+  <main class="a-login-page" id="login" aria-live="polite">
+    <div class="box"><p class="a-note">Wczytuję panel...</p></div>
+  </main>
+
+  <!-- Panel po zalogowaniu -->
+  <div class="a-app" id="app" hidden>
+    <aside class="adm" id="panel" aria-label="Panel administratora">
+      <div class="a-head">
+        <h1>Panel strony <span class="who" id="a-who"></span></h1>
+        <button class="b sm a-only-narrow" type="button" data-act="preview">Podgląd</button>
+        <a class="b sm" href="index.html" target="_blank" rel="noopener">Otwórz stronę</a>
+      </div>
+      <div class="a-tabs" role="tablist">
+        <button type="button" role="tab" data-tab="projekty">Projekty</button>
+        <button type="button" role="tab" data-tab="profil">Profil</button>
+        <button type="button" role="tab" data-tab="wyglad">Wygląd</button>
+        <button type="button" role="tab" data-tab="publikacja">Publikacja</button>
+      </div>
+      <div class="a-body" id="a-body"></div>
+      <div class="a-foot">
+        <span class="a-status" id="a-status"><span class="dot"></span><span id="a-st"></span></span>
+        <button class="b pri" type="button" data-act="save" id="a-save">Zapisz i opublikuj</button>
+      </div>
+    </aside>
+
+    <section class="a-preview" id="preview" aria-label="Podgląd strony">
+      <div class="a-pbar">
+        <div class="seg" id="device">
+          <button type="button" data-dev="desktop" aria-pressed="true">Komputer</button>
+          <button type="button" data-dev="mobile" aria-pressed="false">Telefon</button>
+        </div>
+        <span class="a-note">Podgląd na żywo, zanim zapiszesz</span>
+        <span class="spacer"></span>
+        <button class="b sm" type="button" id="reload">Odśwież podgląd</button>
+        <button class="b sm a-only-narrow" type="button" data-act="preview">Wróć do panelu</button>
+      </div>
+      <div class="a-stage" id="stage">
+        <iframe id="frame" src="index.html?embed" title="Podgląd strony"></iframe>
+      </div>
+    </section>
+  </div>
+
+  <div class="toast" id="toast" role="status"></div>
+  <script src="admin.js"></script>
+</body>
+</html>
