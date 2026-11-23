@@ -2,7 +2,7 @@
 
 <div align="center">
 
-<a href="https://github.com/z0z6"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/profile/hero-dark.svg"><img alt="z0z6 — aplikacje dla szkół specjalnych i warsztatów terapii, narzędzia działające lokalnie i gry" src="assets/profile/hero-light.svg" width="100%"></picture></a>
+<a href="https://github.com/z0z6"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/profile/hero-dark.svg"><img alt="z0z6 — aplikacje customowe · praktyczne rozwiązania · design · eksperymentalnie · vib3c0DinG" src="assets/profile/hero-light.svg" width="100%"></picture></a>
 
 <br>
 

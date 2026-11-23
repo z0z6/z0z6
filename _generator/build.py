@@ -4,11 +4,13 @@ Tworzy SVG (jasne + ciemne) z osadzonymi, przyciętymi fontami oraz README.md.""
 import base64, io, json, math, os, subprocess, collections, html
 from fontTools.ttLib import TTFont
 from fontTools import subset as ftsubset
+from PIL import Image, ImageDraw, ImageFont
 
-SRC = '/home/claude/src'
-OUT = '/home/claude/out'
+# ścieżki można nadpisać zmiennymi środowiskowymi
+SRC = os.environ.get('Z_SRC', '/home/claude/srcrepos')          # sklonowane repozytoria
+OUT = os.environ.get('Z_OUT', '/home/claude/out')
 ASSETS = 'assets/profile'
-FD = '/home/claude/build/node_modules/@fontsource'
+FD = os.environ.get('Z_FONTS', '/home/claude/build/node_modules/@fontsource')  # npm i @fontsource/{bricolage-grotesque,jetbrains-mono,instrument-serif}
 os.makedirs(os.path.join(OUT, ASSETS), exist_ok=True)
 
 # ---------------------------------------------------------------- fonts
@@ -16,8 +18,12 @@ FONTS = {
     'B':  ('zB',  f'{FD}/bricolage-grotesque/files/bricolage-grotesque-%s-400-normal.woff2'),
     'BM': ('zBM', f'{FD}/bricolage-grotesque/files/bricolage-grotesque-%s-600-normal.woff2'),
     'BB': ('zBB', f'{FD}/bricolage-grotesque/files/bricolage-grotesque-%s-800-normal.woff2'),
+    'BL': ('zBL', f'{FD}/bricolage-grotesque/files/bricolage-grotesque-%s-300-normal.woff2'),
     'M':  ('zM',  f'{FD}/jetbrains-mono/files/jetbrains-mono-%s-400-normal.woff2'),
+    'MM': ('zMM', f'{FD}/jetbrains-mono/files/jetbrains-mono-%s-500-normal.woff2'),
+    'SI': ('zSI', f'{FD}/instrument-serif/files/instrument-serif-%s-400-italic.woff2'),
 }
+WORDMARK = f'{FD}/jetbrains-mono/files/jetbrains-mono-latin-800-normal.woff2'
 _tt = {}
 def tt(key, sub):
     k = (key, sub)
@@ -66,13 +72,16 @@ def font_css(used):
     return ''.join(css)
 
 # ---------------------------------------------------------------- themes
+# tylko czerń, biel, szarości + drobne akcenty pomarańczu
 THEMES = {
-    'dark': dict(bg='#0b0d12', surface='#11141b', surface2='#151922', line='#242936', faint='#1d212c',
-                 ink='#f1f3f7', muted='#8d93a3', dim='#5d6373',
-                 A='#7b8cff', Bc='#3ad6a2', C='#ff7c5a', D='#6b7180'),
-    'light': dict(bg='#ffffff', surface='#f6f7f9', surface2='#f1f3f6', line='#e3e6ec', faint='#e4e7ed',
-                  ink='#12141a', muted='#5c6271', dim='#9aa0ad',
-                  A='#3245e6', Bc='#0c9a70', C='#ee4f2a', D='#9aa0ad'),
+    'dark': dict(bg='#0a0a0a', surface='#111111', surface2='#151515', line='#262626', faint='#1c1c1c', shadow='#2e2e2e',
+                 ink='#f4f4f4', g1='#c4c4c4', g2='#9b9b9b', g3='#6e6e6e', g4='#454545',
+                 muted='#a3a3a3', dim='#6e6e6e', orange='#ff6b1a',
+                 A='#f4f4f4', Bc='#c4c4c4', C='#9b9b9b', D='#6e6e6e'),
+    'light': dict(bg='#ffffff', surface='#f5f5f5', surface2='#efefef', line='#e3e3e3', faint='#e8e8e8', shadow='#d9d9d9',
+                  ink='#0b0b0b', g1='#3b3b3b', g2='#5f5f5f', g3='#8c8c8c', g4='#b8b8b8',
+                  muted='#555555', dim='#8c8c8c', orange='#f2560a',
+                  A='#0b0b0b', Bc='#3b3b3b', C='#5f5f5f', D='#8c8c8c'),
 }
 
 class SVG:
@@ -165,94 +174,171 @@ lmin, lmax = math.log(min(loc.values())), math.log(max(loc.values()))
 def lnorm(r): return (math.log(loc[r]) - lmin) / (lmax - lmin)
 TOTAL = sum(langtot.values())
 
-def bg_grid(s, pid, pitch=24, r=1.1, fade=True):
+def bg_grid(s, pid, pitch=8, r=0.8, fade=True):
     s.add(f'<defs><pattern id="{pid}" width="{pitch}" height="{pitch}" patternUnits="userSpaceOnUse">'
-          f'<circle cx="{pitch/2}" cy="{pitch/2}" r="{r}" fill="{s.c("line")}"/></pattern>'
+          f'<circle cx="{pitch/2:g}" cy="{pitch/2:g}" r="{r}" fill="{s.c("line")}"/></pattern>'
           f'<radialGradient id="{pid}f" cx="0.3" cy="0.35" r="0.85"><stop offset="0" stop-color="#fff"/>'
           f'<stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>'
           f'<mask id="{pid}m"><rect width="100%" height="100%" fill="url(#{pid}f)"/></mask></defs>')
     s.add(f'<rect width="{s.w}" height="{s.h}" fill="url(#{pid})" mask="url(#{pid}m)"/>')
 
 # ---------------------------------------------------------------- hero
-GLYPH = {
- 'z': ['.....', '.....', '#####', '...#.', '..#..', '.#...', '#####'],
- '0': ['.###.', '#...#', '#..##', '#.#.#', '##..#', '#...#', '.###.'],
- '6': ['..##.', '.#...', '#....', '####.', '#...#', '#...#', '.###.'],
-}
+_wm = None
+def _wordmark_ttf():
+    """PIL potrzebuje TTF — konwersja woff2 → ttf do pliku tymczasowego."""
+    global _wm
+    if _wm is None:
+        import tempfile
+        f = TTFont(WORDMARK); f.flavor = None
+        _wm = os.path.join(tempfile.gettempdir(), 'z0z6-wordmark.ttf'); f.save(_wm)
+    return _wm
+
+def coverage(text, cols, rows, k=10, pad=(0, 0)):
+    """Rasteryzuje tekst do siatki cols×rows; zwraca pokrycie 0..1 każdej komórki."""
+    W, H = cols * k, rows * k
+    font_size = 400
+    f = ImageFont.truetype(_wordmark_ttf(), font_size)
+    bb = f.getbbox(text)
+    tw, th = bb[2] - bb[0], bb[3] - bb[1]
+    sc = min((W - pad[0] * k) / tw, (H - pad[1] * k) / th)
+    f = ImageFont.truetype(_wordmark_ttf(), int(font_size * sc))
+    bb = f.getbbox(text)
+    img = Image.new('L', (W, H), 0)
+    ImageDraw.Draw(img).text((-bb[0], H - bb[3]), text, font=f, fill=255)
+    small = img.resize((cols, rows), Image.BOX)
+    px = small.load()
+    return [[px[x, y] / 255 for x in range(cols)] for y in range(rows)], (bb[2] - bb[0]) / k
+
 def hero(theme):
     W, H = 1200, 560
-    s = SVG(W, H, theme, 'z0z6 — szkoła i terapia, narzędzia lokalne, gry')
-    s.css.append('.w{animation:w 4.8s ease-in-out infinite}@keyframes w{0%,100%{opacity:1}50%{opacity:.28}}'
-                 '.p{animation:p 2.4s ease-in-out infinite;transform-box:fill-box;transform-origin:center}'
-                 '@keyframes p{0%,100%{transform:scale(1)}50%{transform:scale(1.35)}}'
-                 '.b{animation:b 1.6s steps(1) infinite}@keyframes b{50%{opacity:0}}')
+    s = SVG(W, H, theme, 'z0z6 — aplikacje customowe, praktyczne rozwiązania, design, eksperymentalnie, vib3c0DinG')
+    s.css.append('.p{animation:p 2.4s ease-in-out infinite;transform-box:fill-box;transform-origin:center}'
+                 '@keyframes p{0%,100%{transform:scale(1)}50%{transform:scale(1.5)}}'
+                 '.b{animation:b 1.1s steps(1) infinite}@keyframes b{50%{opacity:0}}')
     s.add(f'<rect x="1" y="1" width="{W-2}" height="{H-2}" rx="30" fill="{s.c("bg")}" stroke="{s.c("line")}"/>')
+
+    # tło: drobna siatka kropek (wysoka rozdzielczość), wygaszana radialnie
     bg_grid(s, 'hg')
+
     # górny pasek
     s.text(64, 64, 'z0z6', 'M', 14, 'ink')
-    s.text(108, 64, '/ github.com/z0z6', 'M', 14, 'dim')
-    s.add(f'<circle class="p" cx="{W-246}" cy="59" r="4" fill="{s.c("Bc")}"/>')
-    s.text(W-232, 64, 'open source · Polska', 'M', 14, 'muted')
-    # wordmark z kropek
-    pitch, r, x0, y0 = 25, 8.6, 64 + 12.5, 112
-    word = 'z0z6'
-    accents = {(0, 6, 4): 'A', (1, 3, 2): 'Bc', (3, 0, 3): 'C'}
-    for gi, ch in enumerate(word):
-        g = GLYPH[ch]
-        for ry, row in enumerate(g):
-            for cx_, v in enumerate(row):
-                col = gi * 6 + cx_
-                x, y = x0 + col * pitch, y0 + ry * pitch
-                if v == '#':
-                    acc = accents.get((gi, ry, cx_))
-                    fill = s.c(acc) if acc else s.c('ink')
-                    cls = 'p' if acc else 'w'
-                    s.add(f'<circle class="{cls}" style="animation-delay:{col*0.11 + ry*0.04:.2f}s" cx="{x:.1f}" cy="{y:.1f}" r="{r}" fill="{fill}"/>')
-                else:
-                    s.add(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{r*0.42:.1f}" fill="{s.c("faint")}"/>')
-    # kursor
-    cxp = x0 + 23 * pitch + 4
-    s.add(f'<rect class="b" x="{cxp:.1f}" y="{y0 + 6*pitch - r:.1f}" width="{r*1.6:.1f}" height="{r*2}" rx="2" fill="{s.c("ink")}"/>')
-    # bio
-    by, bs = 344, 27
-    s.runs(64, by, [('Buduję aplikacje dla ', 'ink'), ('szkół specjalnych', 'A')], 'BM', bs)
-    s.runs(64, by + 38, [('i warsztatów terapii', 'A'), (', ', 'ink'), ('narzędzia, które', 'Bc')], 'BM', bs)
-    s.runs(64, by + 76, [('działają lokalnie', 'Bc'), (', i ', 'ink'), ('gry, w które sam', 'C')], 'BM', bs)
-    s.runs(64, by + 114, [('chcę grać', 'C'), ('.', 'ink')], 'BM', bs)
-    s.text(64, H - 48, 'Android · Windows · Linux · Web', 'M', 14, 'muted')
-    s.text(64 + width('Android · Windows · Linux · Web', 'M', 14) + 18, H - 48, '//  JavaScript · Kotlin · Godot · Rust', 'M', 14, 'dim')
-    # panel matrycy
+    s.text(108, 64, '/ github.com/z0z6', 'M', 14, 'g3')
+    s.add(f'<circle class="p" cx="{W-246}" cy="59" r="3.5" fill="{s.c("orange")}"/>')
+    s.text(W - 232, 64, 'open source · Polska', 'M', 14, 'g2')
+
+    # wordmark: halftone na gęstej siatce
+    PT = 5.0                       # odstęp kropek
+    cols, rows = 120, 34
+    x0, y0 = 64 + PT / 2, 94 + PT / 2
+    cov, _ = coverage('z0z6', cols, rows)
+    rmax = PT * 0.47
+    main, shade = [], []
+    dx, dy = 2, 2                 # przesunięcie „cienia” w komórkach
+    for y in range(rows + dy):
+        for x in range(cols + dx):
+            c = cov[y][x] if y < rows and x < cols else 0
+            sy, sx = y - dy, x - dx
+            sc_ = cov[sy][sx] if 0 <= sy < rows and 0 <= sx < cols else 0
+            cx, cy = x0 + x * PT, y0 + y * PT
+            if c > 0.06:
+                t = y / rows                                   # lekki gradient rastra w dół
+                r = rmax * math.sqrt(c) * (1 - 0.38 * t)
+                main.append(f'<circle cx="{cx:g}" cy="{cy:g}" r="{r:.2f}"/>')
+            elif sc_ > 0.25:
+                shade.append(f'<circle cx="{cx:g}" cy="{cy:g}" r="{rmax*0.62*math.sqrt(sc_):.2f}"/>')
+    # pomarańczowy pasek „skanu” przesuwający się po wordmarku
+    s.add(f'<defs><linearGradient id="sc" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="1200" y2="0">'
+          f'<stop offset="0" stop-color="{s.c("ink")}"/><stop offset=".485" stop-color="{s.c("ink")}"/>'
+          f'<stop offset=".495" stop-color="{s.c("orange")}"/><stop offset=".505" stop-color="{s.c("orange")}"/>'
+          f'<stop offset=".515" stop-color="{s.c("ink")}"/><stop offset="1" stop-color="{s.c("ink")}"/>'
+          f'<animateTransform attributeName="gradientTransform" type="translate" values="-700 0;-700 0;300 0" keyTimes="0;.55;1" dur="7s" repeatCount="indefinite"/>'
+          f'</linearGradient></defs>')
+    s.add(f'<g fill="{s.c("shadow")}">{"".join(shade)}</g>')
+    s.add(f'<g fill="url(#sc)">{"".join(main)}</g>')
+    # kursor z kropek (pomarańczowy, mruga)
+    last_col = max(x for y in range(rows) for x in range(cols) if cov[y][x] > 0.06)
+    kc = last_col + 5
+    cur = []
+    for yy in range(rows - 2, rows):
+        for xx in range(kc, kc + 8):
+            cur.append(f'<circle cx="{x0 + xx*PT:g}" cy="{y0 + yy*PT:g}" r="{rmax*0.82:.2f}"/>')
+    s.add(f'<g class="b" fill="{s.c("orange")}">{"".join(cur)}</g>')
+
+    # chmura tagów
+    TX = 64
+    def tag_line(y, items):
+        x = TX
+        for it in items:
+            kind = it[0]
+            if kind == 'gap':
+                x += it[1]; continue
+            _, txt, key, size, fill, extra = it
+            if kind == 'outline':
+                s.text(x, y, txt, key, size, 'none', extra=f' stroke="{s.c(fill)}" stroke-width="1.1"')
+            else:
+                s.text(x, y, txt, key, size, fill, extra=extra)
+            x += width(txt, key, size)
+        return x
+
+    ya = 332
+    tag_line(ya, [('t', 'aplikacje customowe', 'BB', 40, 'ink', ''), ('gap', 16),
+                  ('t', 'design', 'SI', 50, 'g2', '')])
+    yb = ya + 50
+    xb = tag_line(yb, [('t', 'praktyczne rozwiązania', 'BL', 31, 'g1', '')])
+    # vib3c0DinG — terminalowa pigułka
+    vs, vk = 18, 'MM'
+    px0 = xb + 18
+    pw_ = width('vib3c0DinG', vk, vs) + 46
+    s.add(f'<rect x="{px0:.1f}" y="{yb-25}" width="{pw_:.1f}" height="32" rx="16" fill="{s.c("surface")}" stroke="{s.c("line")}"/>')
+    s.add(f'<circle class="p" cx="{px0+17:.1f}" cy="{yb-9}" r="2.6" fill="{s.c("orange")}"/>')
+    s.runs(px0 + 30, yb - 3, [('vib', 'ink'), ('3', 'orange'), ('c', 'ink'), ('0', 'orange'), ('DinG', 'ink')], vk, vs)
+    yc = yb + 48
+    xc = tag_line(yc, [('outline', 'eksperymentalnie', 'BB', 31, 'g2', '')])
+    s.text(xc + 18, yc - 2, '#tagi · 05', 'M', 12, 'g3', ls=1)
+
+    s.text(64, H - 48, 'Android · Windows · Linux · Web', 'M', 14, 'g2')
+    s.text(64 + width('Android · Windows · Linux · Web', 'M', 14) + 18, H - 48,
+           '//  JavaScript · Kotlin · Godot · Rust', 'M', 14, 'g3')
+
+    # panel matrycy repozytoriów
     px, py, pw, ph = 708, 96, 436, 412
+    s.add(f'<defs><pattern id="pg" width="6" height="6" patternUnits="userSpaceOnUse"><circle cx="3" cy="3" r=".55" fill="{s.c("line")}"/></pattern></defs>')
     s.add(f'<rect x="{px}" y="{py}" width="{pw}" height="{ph}" rx="22" fill="{s.c("surface")}" stroke="{s.c("line")}"/>')
-    s.text(px + 28, py + 42, 'MATRYCA REPOZYTORIÓW', 'M', 12, 'dim', ls=2)
-    s.text(px + pw - 28, py + 42, f'{NREPO:02d}', 'M', 12, 'ink', anchor='end', ls=2)
+    s.add(f'<rect x="{px}" y="{py}" width="{pw}" height="{ph}" rx="22" fill="url(#pg)" opacity=".6"/>')
+    s.text(px + 28, py + 42, 'MATRYCA REPOZYTORIÓW', 'M', 12, 'g3', ls=2)
+    s.text(px + pw - 28, py + 42, f'{NREPO:02d}', 'M', 12, 'orange', anchor='end', ls=2)
+    gcol = ['ink', 'g1', 'g2', 'g3']
     ry_ = py + 82
     labels = {'A': 'szkoła i terapia', 'B': 'narzędzia lokalne', 'C': 'gry', 'D': 'drobiazgi'}
-    for key in 'ABCD':
-        items = sorted(P[key]['items'], key=lambda it: -loc[it[0]])
-        s.text(px + 28, ry_, P[key]['no'], 'M', 13, PCOL[key])
-        s.text(px + 58, ry_, labels[key], 'M', 13, 'muted')
-        s.text(px + pw - 28, ry_, f'{len(items):02d}', 'M', 13, 'dim', anchor='end')
-        for i, it in enumerate(items):
-            rr = 3.6 + 11.4 * lnorm(it[0])
+    for gi, key in enumerate('ABCD'):
+        no, lab = P[key]['no'], labels[key]
+        repos = sorted((it[0] for it in P[key]['items']), key=lambda r: -loc[r])
+        s.text(px + 28, ry_, no, 'M', 13, 'g3')
+        s.text(px + 58, ry_, lab, 'M', 13, 'g2')
+        s.text(px + pw - 28, ry_, f'{len(repos):02d}', 'M', 13, 'g3', anchor='end')
+        for i, r in enumerate(repos):
+            rr = 3.6 + 11.4 * lnorm(r)
             cx = px + 28 + 15 + i * 42
-            s.add(f'<circle cx="{cx}" cy="{ry_ + 30}" r="15" fill="none" stroke="{s.c("line")}"/>')
-            s.add(f'<circle cx="{cx}" cy="{ry_ + 30}" r="{rr:.1f}" fill="{s.c(PCOL[key])}"><title>{it[0]} · ~{loc[it[0]]} linii</title></circle>')
+            s.add(f'<circle cx="{cx}" cy="{ry_+30}" r="15" fill="{s.c("bg")}" stroke="{s.c("line")}"/>')
+            s.add(f'<circle cx="{cx}" cy="{ry_+30}" r="{rr:.1f}" fill="{s.c(gcol[gi])}"><title>{r} · ~{loc[r]} linii</title></circle>')
         ry_ += 76
-    s.text(px + 28, py + ph - 22, 'wielkość kropki = ilość kodu', 'M', 12, 'dim')
+    s.text(px + 28, py + ph - 22, 'wielkość kropki = ilość kodu', 'M', 12, 'g3')
     return s
 
 # ---------------------------------------------------------------- language strip
-LCOL = {'JavaScript': 'ink', 'Kotlin': 'A', 'GDScript': 'C', 'HTML/CSS': 'dim', 'Rust': 'Bc', 'Python': '#a58bff', 'Dart': '#2fb6d8', 'C++': 'line'}
+LRAMP = {'dark': ['#f4f4f4', '#cfcfcf', '#a8a8a8', '#858585', '#666666', '#4d4d4d', '#3a3a3a', '#2c2c2c'],
+         'light': ['#0b0b0b', '#2e2e2e', '#525252', '#737373', '#949494', '#b0b0b0', '#c8c8c8', '#dadada']}
 def langs(theme):
     W, H = 1200, 150
     s = SVG(W, H, theme, 'Języki w repozytoriach z0z6')
     items = langtot.most_common()
+    LCOL = {name: LRAMP[theme][min(i, 7)] for i, (name, _) in enumerate(items)}
     s.text(4, 30, 'KOD', 'M', 12, 'dim', ls=2)
     tot_k = round(TOTAL / 1000)
-    s.text(W - 4, 30, f'≈ {tot_k} tys. linii · {NREPO} repozytoriów', 'M', 12, 'dim', anchor='end', ls=1)
-    # pasek z kropek: 96 kolumn x 2 wiersze
-    cols, pitch = 96, 1192 / 96
+    s.runs(W - 4, 30, [('≈ ', 'dim'), (f'{tot_k}', 'orange'), (f' tys. linii · {NREPO} repozytoriów', 'dim')], 'M', 12)
+    s.parts[-1] = s.parts[-1].replace('<text ', '<text text-anchor="end" letter-spacing="1" ', 1)
+    # pasek z kropek: 240 kolumn × 4 wiersze (wysoka rozdzielczość)
+    cols, pitch = 240, 1192 / 240
     counts, acc = [], 0.0
     for name, v in items:
         acc += v / TOTAL * cols; counts.append((name, acc))
@@ -260,14 +346,14 @@ def langs(theme):
     for name, edge in counts:
         e = round(edge)
         for c in range(prev, e):
-            for row in range(2):
-                s.add(f'<circle cx="{4 + pitch/2 + c*pitch:.1f}" cy="{58 + row*14}" r="4.6" fill="{s.c(LCOL[name])}"/>')
+            for row in range(4):
+                s.add(f'<circle cx="{4 + pitch/2 + c*pitch:.1f}" cy="{52 + row*7}" r="2.1" fill="{LCOL[name]}"/>')
         prev = e
     x = 4
     for name, v in items:
         pct = v / TOTAL * 100
         lab = f'{name} {pct:.0f}%' if pct >= 1 else f'{name} <1%'
-        s.add(f'<circle cx="{x+5}" cy="{119}" r="5" fill="{s.c(LCOL[name])}"/>')
+        s.add(f'<circle cx="{x+5}" cy="{119}" r="5" fill="{LCOL[name]}" stroke="{s.c("line")}"/>')
         s.text(x + 16, 124, lab, 'M', 13, 'muted')
         x += 16 + width(lab, 'M', 13) + 30
     return s
@@ -277,13 +363,13 @@ def section(key, theme):
     p = P[key]; W, H = 1200, 150
     s = SVG(W, H, theme, f'{p["no"]} {p["title"]}')
     s.add(f'<line x1="4" y1="20" x2="{W-4}" y2="20" stroke="{s.c("line")}"/>')
-    s.text(4, 62, p['no'], 'M', 15, PCOL[key], ls=1)
+    s.text(4, 62, p['no'], 'M', 15, 'orange', ls=1)
     s.text(40, 62, f'/ 03', 'M', 15, 'dim', ls=1)
     s.text(2, 112, p['title'], 'BB', 46, 'ink', ls=-0.8)
     s.text(4, 142, p['sub'], 'B', 19, 'muted')
     n = len(p['items'])
     for i in range(n):
-        s.add(f'<circle cx="{W - 10 - i*20}" cy="57" r="6" fill="{s.c(PCOL[key])}" opacity="{1 - i*0.09:.2f}"/>')
+        s.add(f'<circle cx="{W - 10 - i*20}" cy="57" r="6" fill="{s.c("ink")}" opacity="{1 - i*0.09:.2f}"/>')
     s.text(W - 4, 112, f'{n} repo', 'M', 15, 'dim', anchor='end')
     return s
 
@@ -324,7 +410,7 @@ def featured_ipet(it, theme):
     W, H = 1200, 340
     s = SVG(W, H, theme, f'{name} — {desc}')
     s.add(f'<rect x="1" y="1" width="{W-2}" height="{H-2}" rx="28" fill="{s.c("surface")}" stroke="{s.c("line")}"/>')
-    s.add(f'<circle cx="44" cy="50" r="6" fill="{s.c("A")}"/>')
+    s.add(f'<circle cx="44" cy="50" r="6" fill="{s.c("orange")}"/>')
     s.text(60, 55, 'FLAGOWY · ' + plat.upper(), 'M', 13, 'dim', ls=1.4)
     s.text(38, 128, name, 'BB', 62, 'ink', ls=-1.2)
     for i, l in enumerate(wrap(desc, 'B', 24, 560)):
@@ -336,11 +422,11 @@ def featured_ipet(it, theme):
     s.add(f'<rect x="{bx}" y="{byy}" width="{bw}" height="{bh}" rx="20" fill="{s.c("bg")}" stroke="{s.c("line")}"/>')
     s.text(bx + 26, byy + 38, 'PSEUDONIMIZACJA · PRZED WYSŁANIEM DO AI', 'M', 11.5, 'dim', ls=1.3)
     rows = [
-        [('{{UCZEN}}', 'A'), (' funkcjonuje na poziomie', 'muted')],
+        [('{{UCZEN}}', 'ink'), (' funkcjonuje na poziomie', 'muted')],
         [('niepełnosprawności w stopniu', 'muted')],
-        [('umiarkowanym. Orzeczenie ', 'muted'), ('{{NR}}', 'A')],
-        [('z poradni ', 'muted'), ('{{PORADNIA}}', 'A'), (',', 'muted')],
-        [('PESEL ', 'muted'), ('{{PESEL}}', 'A'), (' · OCR lokalny', 'muted')],
+        [('umiarkowanym. Orzeczenie ', 'muted'), ('{{NR}}', 'ink')],
+        [('z poradni ', 'muted'), ('{{PORADNIA}}', 'ink'), (',', 'muted')],
+        [('PESEL ', 'muted'), ('{{PESEL}}', 'ink'), (' · OCR lokalny', 'muted')],
     ]
     for i, segs in enumerate(rows):
         s.runs(bx + 26, byy + 76 + i * 28, segs, 'M', 15)
@@ -349,8 +435,8 @@ def featured_ipet(it, theme):
     x = bx + 26; y = byy + bh - 34
     for ptxt in pills:
         w = width(ptxt, 'M', 12.5) + 24
-        s.add(f'<rect x="{x}" y="{y-17}" width="{w:.1f}" height="26" rx="13" fill="none" stroke="{s.c("A")}" stroke-opacity="0.55"/>')
-        s.text(x + 12, y + 1, ptxt, 'M', 12.5, 'A')
+        s.add(f'<rect x="{x}" y="{y-17}" width="{w:.1f}" height="26" rx="13" fill="none" stroke="{s.c("dim")}" stroke-opacity="0.7"/>')
+        s.text(x + 12, y + 1, ptxt, 'M', 12.5, 'muted')
         x += w + 8
     return s
 
@@ -360,7 +446,7 @@ def featured_gta(it, theme):
     s = SVG(W, H, theme, f'{name} — {desc}')
     s.css.append('.m{animation:m 3.2s ease-in-out infinite}@keyframes m{0%,100%{opacity:.9}50%{opacity:.35}}')
     s.add(f'<rect x="1" y="1" width="{W-2}" height="{H-2}" rx="28" fill="{s.c("surface")}" stroke="{s.c("line")}"/>')
-    s.add(f'<circle cx="44" cy="50" r="6" fill="{s.c("C")}"/>')
+    s.add(f'<circle cx="44" cy="50" r="6" fill="{s.c("orange")}"/>')
     s.text(60, 55, 'FLAGOWA GRA · ' + plat.upper(), 'M', 13, 'dim', ls=1.4)
     size = 62
     while width(name, 'BB', size, -1.2) > 620 and size > 30: size -= 1
@@ -374,7 +460,7 @@ def featured_gta(it, theme):
     pts = [(sum(o['p'][0::2]) / len(o['p'][0::2]), sum(o['p'][1::2]) / len(o['p'][1::2])) for o in b]
     bx, byy, bw, bh = 700, 36, 464, 268
     s.add(f'<rect x="{bx}" y="{byy}" width="{bw}" height="{bh}" rx="20" fill="{s.c("bg")}" stroke="{s.c("line")}"/>')
-    cols, rows_, pitch = 50, 24, 8.6
+    cols, rows_, pitch = 86, 41, 5.0
     minx, maxx = min(p[0] for p in pts), max(p[0] for p in pts)
     band = (maxx - minx) * rows_ / cols
     ys = sorted(p[1] for p in pts)
@@ -393,17 +479,17 @@ def featured_gta(it, theme):
             v = grid.get((gx, gy), 0)
             cx, cy = ox + gx * pitch, oy + gy * pitch
             if v:
-                rr = 1.6 + 2.2 * min(1, math.sqrt(v / mx) * 1.4)
+                rr = 0.9 + 1.4 * min(1, math.sqrt(v / mx) * 1.4)
                 s.add(f'<circle cx="{cx:.1f}" cy="{cy:.1f}" r="{rr:.1f}" fill="{s.c("ink")}" opacity="0.85"/>')
             else:
-                s.add(f'<circle cx="{cx:.1f}" cy="{cy:.1f}" r="0.9" fill="{s.c("line")}"/>')
+                s.add(f'<circle cx="{cx:.1f}" cy="{cy:.1f}" r="0.55" fill="{s.c("line")}"/>')
     # gracz i pościg
     (kx, ky), _ = max(grid.items(), key=lambda kv: kv[1] - 0.02 * ((kv[0][0] - cols/2)**2 + (kv[0][1] - rows_/2)**2))
-    gxp, gyp = ox + (kx + 2) * pitch, oy + ky * pitch
-    s.add(f'<circle class="m" cx="{gxp:.1f}" cy="{gyp:.1f}" r="16" fill="{s.c("C")}" opacity="0.25"/>')
-    s.add(f'<circle cx="{gxp:.1f}" cy="{gyp:.1f}" r="5.5" fill="{s.c("C")}"/>')
-    for dx, dy in [(-5, -3), (-6, 3), (-3, 5)]:
-        s.add(f'<circle cx="{gxp + dx*pitch:.1f}" cy="{gyp + dy*pitch:.1f}" r="4" fill="none" stroke="{s.c("C")}" stroke-width="2"/>')
+    gxp, gyp = ox + (kx + 3) * pitch, oy + ky * pitch
+    s.add(f'<circle class="m" cx="{gxp:.1f}" cy="{gyp:.1f}" r="16" fill="{s.c("orange")}" opacity="0.25"/>')
+    s.add(f'<circle cx="{gxp:.1f}" cy="{gyp:.1f}" r="5.5" fill="{s.c("orange")}"/>')
+    for dx, dy in [(-9, -5), (-10, 5), (-5, 9)]:
+        s.add(f'<circle cx="{gxp + dx*pitch:.1f}" cy="{gyp + dy*pitch:.1f}" r="4" fill="none" stroke="{s.c("ink")}" stroke-width="2"/>')
     s.text(bx + 24, byy + bh - 14, f'MAKÓW MAZOWIECKI · BUDYNKI Z OPENSTREETMAP', 'M', 11.5, 'dim', ls=1.3)
     return s
 
@@ -411,11 +497,11 @@ def footer(theme):
     W, H = 1200, 120
     s = SVG(W, H, theme, 'z0z6')
     s.css.append('.f{animation:f 3.6s ease-in-out infinite}@keyframes f{0%,100%{opacity:.2}50%{opacity:1}}')
-    n = 60
+    n = 150
     for i in range(n):
         y = 40 + 14 * math.sin(i / n * math.pi * 4)
-        col = ['A', 'Bc', 'C'][int(i / n * 3)]
-        s.add(f'<circle class="f" style="animation-delay:{i*0.06:.2f}s" cx="{10 + i*(1180/(n-1)):.1f}" cy="{y:.1f}" r="3.2" fill="{s.c(col)}"/>')
+        col = 'orange' if i == n // 2 else ('ink' if i % 3 == 0 else 'g3')
+        s.add(f'<circle class="f" style="animation-delay:{i*0.024:.2f}s" cx="{10 + i*(1180/(n-1)):.1f}" cy="{y:.1f}" r="{2.6 if col == "orange" else 1.7}" fill="{s.c(col)}"/>')
     s.text(W / 2, 100, 'z0z6 · działa lokalnie · zrobione w Polsce', 'M', 13, 'dim', anchor='middle', ls=1.5)
     return s
 
@@ -441,7 +527,7 @@ def pic(name, alt, w=None, href=None):
 GH = 'https://github.com/z0z6/'
 md = ['<!-- Okładka profilu z0z6. Grafiki: assets/profile/*.svg (jasne i ciemne). -->', '',
       '<div align="center">', '',
-      pic('hero', 'z0z6 — aplikacje dla szkół specjalnych i warsztatów terapii, narzędzia działające lokalnie i gry', '100%', 'https://github.com/z0z6'),
+      pic('hero', 'z0z6 — aplikacje customowe · praktyczne rozwiązania · design · eksperymentalnie · vib3c0DinG', '100%', 'https://github.com/z0z6'),
       '', '<br>', '', pic('langs', 'Języki: JavaScript, Kotlin, GDScript, HTML/CSS, Rust, Python, Dart', '100%'), '', '<br>', '']
 for k in 'ABC':
     items = P[k]['items']
