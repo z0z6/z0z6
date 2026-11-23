@@ -148,7 +148,7 @@ P = {
    ('tax', 'Asystent PIT', 'Z pasków wypłat liczy podatek za rok i przewiduje dopłatę lub zwrot.', 'Windows · Linux · Android', 'Electron · OCR'),
    ('watcher', 'WatchPL', 'Monitor zdarzeń w płn.-wsch. Polsce z oceną wiarygodności doniesień.', 'Android', 'Flutter · Python'),
    ('Tracko', 'Tracko', 'Tracker aktywności z GPS: ranking, wyścig duchów i planer tras.', 'Android · Web', 'Kotlin · Supabase'),
-   ('cryptoscaner', 'cryptoscaner', 'Notowania kryptowalut na żywo, alerty i wykresy z jednego kodu.', 'Linux · Windows · Android', 'Electron · Capacitor'),
+   ('cryptoscaner', 'CryptoScaner', 'Notowania kryptowalut na żywo, alerty i wykresy z jednego kodu.', 'Linux · Windows · Android', 'Electron · Capacitor'),
    ('cinemaker', 'Kadr Studio', 'Edytor wideo z osią czasu, wieloma torami i eksportem przez FFmpeg.', 'Windows · Linux', 'Electron · FFmpeg'),
    ('melodico', 'Sampler', 'Sampler, looper i mini-deck w estetyce konsolety DJ.', 'Android', 'Kotlin · Compose'),
    ('steps', 'Dot Steps', 'Licznik kroków w stylu matrycy kropek, z trybem E-ink.', 'Android', 'Kotlin · Compose'),
