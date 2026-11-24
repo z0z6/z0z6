@@ -160,14 +160,16 @@ P = {
    ('8w1', 'Retro Arcade', 'Hub gier na telefon. Na start Marble Maze sterowany przechyłem.', 'Android', 'Godot 4.4 · Jolt'),
    ('TRON', 'Light Cycles', 'Świetlne motocykle w 2D i 3D: AI, multiplayer online, power-upy.', 'Web', 'Three.js · Vite'),
    ('SuperMayoBros', 'Łąkowa Przygoda', 'Platformówka z jednym plikiem gry dla przeglądarki i Androida.', 'Web · Android', 'HTML5 · WebView'),
-   ('metaverse', 'Galeria', 'Wirtualna sala wystawowa w przeglądarce, z trybem VR (WebXR).', 'Web · VR', 'Three.js · WebXR'),
    ('brawl', 'Arena Brawl', 'Arena offline: Ty kontra sześć botów w trybie Showdown.', 'Android', 'Kotlin'),
  ]),
- 'D': dict(no='04', title='Drobiazgi', sub='', items=[
-   ('foto', 'foto', 'galeria zdjęć', '', ''), ('odliczanie', 'odliczanie', 'licznik z panelem', '', ''),
-   ('rotacja', 'rotacja', 'obracany model 3D', '', ''), ('z0z6', 'z0z6', 'strona z projektami', '', ''),
+ 'D': dict(no='04', title='Design', sub='Przestrzeń 3D, galerie i strony, w których forma gra pierwsze skrzypce.', items=[
+   ('metaverse', 'Galeria', 'Wirtualna sala wystawowa w przeglądarce: spacer z widokiem z pierwszej lub trzeciej osoby i tryb VR (WebXR).', 'Web · VR', 'Three.js · WebXR'),
+   ('foto', 'Foto', 'Portfolio zdjęć z miniaturami i pełnym podglądem w lightboxie.', 'Web', 'HTML · CSS · JS'),
+   ('rotacja', 'Rotacja', 'Model 3D, który obraca się w pętli, a przeciągnięciem także ręcznie.', 'Web', 'Three.js'),
+   ('odliczanie', 'Odliczanie', 'Licznik do wydarzenia z panelem admina, który zapisuje ustawienia przez GitHub API.', 'Web', 'HTML · JS · GitHub API'),
  ]),
 }
+NSEC = len(P)
 PCOL = {'A': 'A', 'B': 'Bc', 'C': 'C', 'D': 'D'}
 NREPO = sum(len(p['items']) for p in P.values())
 lmin, lmax = math.log(min(loc.values())), math.log(max(loc.values()))
@@ -309,7 +311,7 @@ def hero(theme):
     s.text(px + pw - 28, py + 42, f'{NREPO:02d}', 'M', 12, 'orange', anchor='end', ls=2)
     gcol = ['ink', 'g1', 'g2', 'g3']
     ry_ = py + 82
-    labels = {'A': 'szkoła i terapia', 'B': 'narzędzia lokalne', 'C': 'gry', 'D': 'drobiazgi'}
+    labels = {'A': 'szkoła i terapia', 'B': 'narzędzia lokalne', 'C': 'gry', 'D': 'design'}
     for gi, key in enumerate('ABCD'):
         no, lab = P[key]['no'], labels[key]
         repos = sorted((it[0] for it in P[key]['items']), key=lambda r: -loc[r])
@@ -364,7 +366,7 @@ def section(key, theme):
     s = SVG(W, H, theme, f'{p["no"]} {p["title"]}')
     s.add(f'<line x1="4" y1="20" x2="{W-4}" y2="20" stroke="{s.c("line")}"/>')
     s.text(4, 62, p['no'], 'M', 15, 'orange', ls=1)
-    s.text(40, 62, f'/ 03', 'M', 15, 'dim', ls=1)
+    s.text(40, 62, f'/ {NSEC:02d}', 'M', 15, 'dim', ls=1)
     s.text(2, 112, p['title'], 'BB', 46, 'ink', ls=-0.8)
     s.text(4, 142, p['sub'], 'B', 19, 'muted')
     n = len(p['items'])
@@ -493,6 +495,70 @@ def featured_gta(it, theme):
     s.text(bx + 24, byy + bh - 14, f'MAKÓW MAZOWIECKI · BUDYNKI Z OPENSTREETMAP', 'M', 11.5, 'dim', ls=1.3)
     return s
 
+def featured_metaverse(it, theme):
+    repo, name, desc, plat, stack = it
+    W, H = 1200, 340
+    s = SVG(W, H, theme, f'{name} — {desc}')
+    s.add(f'<rect x="1" y="1" width="{W-2}" height="{H-2}" rx="28" fill="{s.c("surface")}" stroke="{s.c("line")}"/>')
+    s.add(f'<circle cx="44" cy="50" r="6" fill="{s.c("orange")}"/>')
+    s.text(60, 55, 'FLAGOWY DESIGN · ' + plat.upper(), 'M', 13, 'dim', ls=1.4)
+    s.text(38, 128, name, 'BB', 62, 'ink', ls=-1.2)
+    for i, l in enumerate(wrap(desc, 'B', 24, 560)[:3]):
+        s.text(40, 176 + i * 33, l, 'B', 24, 'muted')
+    s.text(40, H - 40, stack, 'M', 14, 'ink')
+    meter(s, 640, H - 45, repo, 'D', n=14, r=3.6, pitch=11)
+    # prawa strona: sala wystawowa w perspektywie, narysowana kropkami
+    bx, byy, bw, bh = 700, 36, 464, 268
+    s.add(f'<defs><clipPath id="mv"><rect x="{bx}" y="{byy}" width="{bw}" height="{bh}" rx="20"/></clipPath></defs>')
+    s.add(f'<rect x="{bx}" y="{byy}" width="{bw}" height="{bh}" rx="20" fill="{s.c("bg")}" stroke="{s.c("line")}"/>')
+    vx, vy, f = bx + bw / 2, byy + 112, 150
+    def pr(x, y, z): return vx + f * x / z, vy - f * y / z
+    XW, YF, YC, ZN, ZF = 2.0, -1.0, 1.25, 0.9, 9.0
+    dots = []
+    zs, z = [], ZN
+    while z < ZF:
+        zs.append(z); z *= 1.075
+    for z in zs:
+        rr = max(0.45, 2.3 / z)
+        x = -XW
+        while x <= XW + 1e-6:                         # podłoga
+            px_, py_ = pr(x, YF, z); dots.append((px_, py_, rr, 'ink' if abs(x) < 0.01 else 'g3')); x += 0.2
+        y = YF + 0.2
+        while y < YC:                                  # ściany
+            for sx in (-XW, XW):
+                px_, py_ = pr(sx, y, z); dots.append((px_, py_, rr * 0.8, 'g4'))
+            y += 0.2
+    # tylna ściana
+    x = -XW
+    while x <= XW + 1e-6:
+        y = YF
+        while y <= YC + 1e-6:
+            px_, py_ = pr(x, y, ZF); dots.append((px_, py_, 0.5, 'g4')); y += 0.2
+        x += 0.2
+    by_col = collections.defaultdict(list)
+    for px_, py_, rr, col in dots:
+        if bx < px_ < bx + bw and byy < py_ < byy + bh:
+            by_col[col].append(f'<circle cx="{px_:.1f}" cy="{py_:.1f}" r="{rr:.2f}"/>')
+    g = ''.join(f'<g fill="{s.c(c)}">{"".join(v)}</g>' for c, v in by_col.items())
+    # obrazy na ścianach (czworokąty w perspektywie)
+    frames = []
+    for i, (z0, z1) in enumerate([(1.9, 2.7), (3.3, 4.3), (5.3, 6.5)]):
+        for side in (-1, 1):
+            sx = side * XW
+            pts = [pr(sx, -0.15, z0), pr(sx, -0.15, z1), pr(sx, 0.75, z1), pr(sx, 0.75, z0)]
+            d = 'M' + ' L'.join(f'{a:.1f} {b:.1f}' for a, b in pts) + 'Z'
+            acc = (i == 1 and side == 1)
+            fill = s.c('orange') if acc else s.c('surface')
+            frames.append(f'<path d="{d}" fill="{fill}" stroke="{s.c("orange") if acc else s.c("g2")}" stroke-width="1.2"/>')
+    # obraz na tylnej ścianie
+    (ax, ay), (bx2, by2) = pr(-0.7, -0.1, ZF), pr(0.7, 0.8, ZF)
+    frames.append(f'<rect x="{ax:.1f}" y="{by2:.1f}" width="{bx2-ax:.1f}" height="{ay-by2:.1f}" fill="{s.c("surface")}" stroke="{s.c("g2")}"/>')
+    s.add(f'<defs><linearGradient id="mvf" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="{s.c("bg")}" stop-opacity="0"/>'
+          f'<stop offset=".7" stop-color="{s.c("bg")}"/></linearGradient></defs>')
+    s.add(f'<g clip-path="url(#mv)">{g}{"".join(frames)}<rect x="{bx}" y="{byy+bh-56}" width="{bw}" height="56" fill="url(#mvf)"/></g>')
+    s.text(bx + 24, byy + bh - 14, 'SALA WYSTAWOWA · 18 GNIAZD · TRYB VR', 'M', 11.5, 'dim', ls=1.3)
+    return s
+
 def footer(theme):
     W, H = 1200, 120
     s = SVG(W, H, theme, 'z0z6')
@@ -510,11 +576,12 @@ for th in ('dark', 'light'):
     save('hero', th, hero(th))
     save('langs', th, langs(th))
     save('footer', th, footer(th))
-    for k in 'ABC':
+    for k in 'ABCD':
         save(f'section-{P[k]["no"]}', th, section(k, th))
     save('feat-ipet-wopfu-helper', th, featured_ipet(P['A']['items'][0], th))
     save('feat-GTA26', th, featured_gta(P['C']['items'][0], th))
-    for k in 'ABC':
+    save('feat-metaverse', th, featured_metaverse(P['D']['items'][0], th))
+    for k in 'ABCD':
         for it in P[k]['items']:
             save(f'card-{it[0]}', th, card(k, it, th))
 
@@ -529,11 +596,11 @@ md = ['<!-- Okładka profilu z0z6. Grafiki: assets/profile/*.svg (jasne i ciemne
       '<div align="center">', '',
       pic('hero', 'z0z6 — aplikacje customowe · praktyczne rozwiązania · design · eksperymentalnie · vib3c0DinG', '100%', 'https://github.com/z0z6'),
       '', '<br>', '', pic('langs', 'Języki: JavaScript, Kotlin, GDScript, HTML/CSS, Rust, Python, Dart', '100%'), '', '<br>', '']
-for k in 'ABC':
+for k in 'ABCD':
     items = P[k]['items']
     md += [pic(f'section-{P[k]["no"]}', f'{P[k]["no"]} — {P[k]["title"]}', '100%'), '', '<br>', '']
     grid = items
-    if k in 'AC':
+    if k in 'ACD':
         md += [pic(f'feat-{items[0][0]}', f'{items[0][1]} — {items[0][2]}', '100%', GH + items[0][0]), '']
         grid = items[1:]
     for i in range(0, len(grid), 3):
@@ -541,8 +608,7 @@ for k in 'ABC':
         md.append('\n'.join(pic(f'card-{it[0]}', f'{it[1]} — {it[2]}', '32%', GH + it[0]) for it in row))
         md.append('')
     md += ['<br>', '']
-small = ' &nbsp;·&nbsp; '.join(f'<a href="{GH}{r}"><code>{r}</code></a> {d}' for r, _, d, _, _ in P['D']['items'])
-md += [f'<sub>drobiazgi &nbsp;→&nbsp; {small}</sub>', '', '<br><br>', '',
+md += [f'<sub>i jeszcze &nbsp;→&nbsp; <a href="{GH}z0z6"><code>z0z6</code></a> strona z projektami</sub>', '', '<br><br>', '',
        pic('footer', 'z0z6 · działa lokalnie · zrobione w Polsce', '100%'), '', '</div>', '']
 open(os.path.join(OUT, 'README.md'), 'w').write('\n'.join(md))
 print('ok', NREPO, TOTAL, langtot.most_common())

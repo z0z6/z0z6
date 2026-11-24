@@ -55,12 +55,23 @@
 <a href="https://github.com/z0z6/TRON"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/profile/card-TRON-dark.svg"><img alt="Light Cycles — Świetlne motocykle w 2D i 3D: AI, multiplayer online, power-upy." src="assets/profile/card-TRON-light.svg" width="32%"></picture></a>
 
 <a href="https://github.com/z0z6/SuperMayoBros"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/profile/card-SuperMayoBros-dark.svg"><img alt="Łąkowa Przygoda — Platformówka z jednym plikiem gry dla przeglądarki i Androida." src="assets/profile/card-SuperMayoBros-light.svg" width="32%"></picture></a>
-<a href="https://github.com/z0z6/metaverse"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/profile/card-metaverse-dark.svg"><img alt="Galeria — Wirtualna sala wystawowa w przeglądarce, z trybem VR (WebXR)." src="assets/profile/card-metaverse-light.svg" width="32%"></picture></a>
 <a href="https://github.com/z0z6/brawl"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/profile/card-brawl-dark.svg"><img alt="Arena Brawl — Arena offline: Ty kontra sześć botów w trybie Showdown." src="assets/profile/card-brawl-light.svg" width="32%"></picture></a>
 
 <br>
 
-<sub>drobiazgi &nbsp;→&nbsp; <a href="https://github.com/z0z6/foto"><code>foto</code></a> galeria zdjęć &nbsp;·&nbsp; <a href="https://github.com/z0z6/odliczanie"><code>odliczanie</code></a> licznik z panelem &nbsp;·&nbsp; <a href="https://github.com/z0z6/rotacja"><code>rotacja</code></a> obracany model 3D &nbsp;·&nbsp; <a href="https://github.com/z0z6/z0z6"><code>z0z6</code></a> strona z projektami</sub>
+<picture><source media="(prefers-color-scheme: dark)" srcset="assets/profile/section-04-dark.svg"><img alt="04 — Design" src="assets/profile/section-04-light.svg" width="100%"></picture>
+
+<br>
+
+<a href="https://github.com/z0z6/metaverse"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/profile/feat-metaverse-dark.svg"><img alt="Galeria — Wirtualna sala wystawowa w przeglądarce: spacer z widokiem z pierwszej lub trzeciej osoby i tryb VR (WebXR)." src="assets/profile/feat-metaverse-light.svg" width="100%"></picture></a>
+
+<a href="https://github.com/z0z6/foto"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/profile/card-foto-dark.svg"><img alt="Foto — Portfolio zdjęć z miniaturami i pełnym podglądem w lightboxie." src="assets/profile/card-foto-light.svg" width="32%"></picture></a>
+<a href="https://github.com/z0z6/rotacja"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/profile/card-rotacja-dark.svg"><img alt="Rotacja — Model 3D, który obraca się w pętli, a przeciągnięciem także ręcznie." src="assets/profile/card-rotacja-light.svg" width="32%"></picture></a>
+<a href="https://github.com/z0z6/odliczanie"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/profile/card-odliczanie-dark.svg"><img alt="Odliczanie — Licznik do wydarzenia z panelem admina, który zapisuje ustawienia przez GitHub API." src="assets/profile/card-odliczanie-light.svg" width="32%"></picture></a>
+
+<br>
+
+<sub>i jeszcze &nbsp;→&nbsp; <a href="https://github.com/z0z6/z0z6"><code>z0z6</code></a> strona z projektami</sub>
 
 <br><br>
 
