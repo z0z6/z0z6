@@ -1,0 +1,53 @@
+name: Okładka profilu
+
+# Odświeża README i grafiki: nowe repo → nowy kafelek, statystyki liczone na nowo.
+on:
+  schedule:
+    - cron: '23 */6 * * *'      # co 6 godzin
+  workflow_dispatch:            # Actions → Okładka profilu → Run workflow
+  push:
+    branches: [main]
+    paths: ['_generator/**', '.github/workflows/profile.yml']
+
+permissions:
+  contents: write
+
+concurrency:
+  group: profile
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Zależności
+        run: |
+          pip install fonttools brotli pillow
+          mkdir -p /tmp/fonts && cd /tmp/fonts
+          npm i --silent @fontsource/bricolage-grotesque @fontsource/jetbrains-mono @fontsource/instrument-serif
+
+      - name: Generowanie okładki
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          Z_USER: ${{ github.repository_owner }}
+          Z_SRC: /tmp/srcrepos
+          Z_OUT: ${{ github.workspace }}
+          Z_FONTS: /tmp/fonts/node_modules/@fontsource
+          Z_CLONE: '1'
+        run: python _generator/build.py
+
+      - name: Commit, jeśli coś się zmieniło
+        run: |
+          git add -A README.md assets/profile
+          if git diff --cached --quiet; then echo "Bez zmian"; exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Okładka: automatyczna aktualizacja"
+          git push
