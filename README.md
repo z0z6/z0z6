@@ -10,11 +10,11 @@
 
 <br>
 
-<picture><source media="(prefers-color-scheme: dark)" srcset="assets/profile/stats-dark.svg"><img alt="Statystyki: 29 repozytoriów, 1376 commitów, ≈211 tys. linii kodu, 77 aktywnych dni" src="assets/profile/stats-light.svg" width="100%"></picture>
+<picture><source media="(prefers-color-scheme: dark)" srcset="assets/profile/stats-dark.svg"><img alt="Statystyki: 30 repozytoriów, 1378 commitów, ≈214 tys. linii kodu, 78 aktywnych dni" src="assets/profile/stats-light.svg" width="100%"></picture>
 
 <picture><source media="(prefers-color-scheme: dark)" srcset="assets/profile/langs-dark.svg"><img alt="Języki: JavaScript, Kotlin, HTML/CSS, GDScript, Rust, Python, Dart, C++" src="assets/profile/langs-light.svg" width="100%"></picture>
 
-<picture><source media="(prefers-color-scheme: dark)" srcset="assets/profile/stats-repos-dark.svg"><img alt="Wszystkie repozytoria (29) z liczbą commitów i datą ostatniej zmiany" src="assets/profile/stats-repos-light.svg" width="100%"></picture>
+<picture><source media="(prefers-color-scheme: dark)" srcset="assets/profile/stats-repos-dark.svg"><img alt="Wszystkie repozytoria (30) z liczbą commitów i datą ostatniej zmiany" src="assets/profile/stats-repos-light.svg" width="100%"></picture>
 
 <br>
 
@@ -41,18 +41,19 @@
 
 <br>
 
+<a href="https://github.com/z0z6/2FA2"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/profile/card-2FA2-dark.svg"><img alt="2FA — Autorska aplikacja do kodów weryfikacji dwuetapowej (jak Google Authenticator) na Windows, Linuksa i Androida." src="assets/profile/card-2FA2-light.svg" width="32%"></picture></a>
 <a href="https://github.com/z0z6/szept"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/profile/card-szept-dark.svg"><img alt="Szept — Szyfrowany komunikator P2P: bez kont, bez numeru telefonu, bez serwera." src="assets/profile/card-szept-light.svg" width="32%"></picture></a>
 <a href="https://github.com/z0z6/QR"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/profile/card-QR-dark.svg"><img alt="QR — Generator kodów QR i przesyłanie plików ruchomym kodem: bez internetu i parowania." src="assets/profile/card-QR-light.svg" width="32%"></picture></a>
-<a href="https://github.com/z0z6/tax"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/profile/card-tax-dark.svg"><img alt="Asystent PIT — Z pasków wypłat liczy podatek za rok i przewiduje dopłatę lub zwrot." src="assets/profile/card-tax-light.svg" width="32%"></picture></a>
 
+<a href="https://github.com/z0z6/tax"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/profile/card-tax-dark.svg"><img alt="Asystent PIT — Z pasków wypłat liczy podatek za rok i przewiduje dopłatę lub zwrot." src="assets/profile/card-tax-light.svg" width="32%"></picture></a>
 <a href="https://github.com/z0z6/watcher"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/profile/card-watcher-dark.svg"><img alt="WatchPL — Monitor zdarzeń w płn.-wsch. Polsce z oceną wiarygodności doniesień." src="assets/profile/card-watcher-light.svg" width="32%"></picture></a>
 <a href="https://github.com/z0z6/Tracko"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/profile/card-Tracko-dark.svg"><img alt="Tracko — Tracker aktywności z GPS: ranking, wyścig duchów i planer tras." src="assets/profile/card-Tracko-light.svg" width="32%"></picture></a>
-<a href="https://github.com/z0z6/cryptoscaner"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/profile/card-cryptoscaner-dark.svg"><img alt="CryptoScaner — Notowania kryptowalut na żywo, alerty i wykresy z jednego kodu." src="assets/profile/card-cryptoscaner-light.svg" width="32%"></picture></a>
 
+<a href="https://github.com/z0z6/cryptoscaner"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/profile/card-cryptoscaner-dark.svg"><img alt="CryptoScaner — Notowania kryptowalut na żywo, alerty i wykresy z jednego kodu." src="assets/profile/card-cryptoscaner-light.svg" width="32%"></picture></a>
 <a href="https://github.com/z0z6/cinemaker"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/profile/card-cinemaker-dark.svg"><img alt="Kadr Studio — Edytor wideo z osią czasu, wieloma torami i eksportem przez FFmpeg." src="assets/profile/card-cinemaker-light.svg" width="32%"></picture></a>
 <a href="https://github.com/z0z6/melodico"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/profile/card-melodico-dark.svg"><img alt="Sampler — Sampler, looper i mini-deck w estetyce konsolety DJ." src="assets/profile/card-melodico-light.svg" width="32%"></picture></a>
-<a href="https://github.com/z0z6/steps"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/profile/card-steps-dark.svg"><img alt="Dot Steps — Licznik kroków w stylu matrycy kropek, z trybem E-ink." src="assets/profile/card-steps-light.svg" width="32%"></picture></a>
 
+<a href="https://github.com/z0z6/steps"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/profile/card-steps-dark.svg"><img alt="Dot Steps — Licznik kroków w stylu matrycy kropek, z trybem E-ink." src="assets/profile/card-steps-light.svg" width="32%"></picture></a>
 <a href="https://github.com/z0z6/vr"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/profile/card-vr-dark.svg"><img alt="VR Player — Odtwarzacz wideo 360° do gogli typu Cardboard." src="assets/profile/card-vr-light.svg" width="32%"></picture></a>
 
 <br>
